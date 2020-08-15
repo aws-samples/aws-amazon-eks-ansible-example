@@ -1,0 +1,71 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: Setup and Customize Amazon EKS
+  hosts: localhost
+  gather_facts: no
+
+  vars: 
+    ansible_ssh_private_key_file: "./secrets/id_rsa_eks"
+    ansible_user: ec2-user
+
+  tasks:
+    - name: check ansible version
+      when: (ansible_version.major == 2 and ansible_version.minor < 8 ) or (ansible_version.major < 2)
+      run_once: yes
+      fail:
+        msg: Please use Ansible 2.8 or newer
+
+    - name: import static var data
+      include_vars:
+        dir: vars/static
+        ignore_unknown_extensions: True
+        extensions:
+          - yaml
+
+    - name: setup bastion host
+      include_tasks: ./tasks/bastion.tasks.yaml
+
+    - name: import dynamic var data
+      include_vars:
+        dir: vars/dynamic
+        ignore_unknown_extensions: True
+        extensions:
+          - yaml
+
+    - name: wait for the bastion to be booted and bootstraped (first-start)
+      wait_for:
+        host: "{{ EKSBastionInstancePublicIP }}"
+        port: 22
+        timeout: 300
+        delay: 120
+      when: bastion_informations.changed
+
+    - name: wait for the bastion to be booted 
+      wait_for:
+        host: "{{ EKSBastionInstancePublicIP }}"
+        port: 22
+        timeout: 300
+      when: not bastion_informations.changed
+
+    - name: Get AWS Account Information
+      delegate_to: "{{ EKSBastionInstancePublicIP }}"
+      aws_caller_info:
+      register: caller_info
+
+    - name: setup the EKS Cluster and additional extensions of the cluster infrastructure
+      include_tasks: "{{ item }}"
+      loop:
+        - ./tasks/eks-cluster.task.yaml
+        - ./tasks/eks-storage-provider-ebscsi.task.yaml
+        - ./tasks/eks-storage-provider-efscsi.task.yaml
+        - ./tasks/eks-container-insights.task.yaml
+        - ./tasks/eks-cluster-autoscaler.task.yaml
+        - ./tasks/eks-ingress-controller.task.yaml
+        - ./tasks/eks-external-dns.task.yaml
+        - ./tasks/eks-metrics-server.task.yaml
+        - ./tasks/eks-xray.task.yaml
+        - ./tasks/acm.task.yaml

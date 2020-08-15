@@ -1,0 +1,35 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: create Policies for ingress-controller
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-cluster-ingresscontroller-policy"
+    state: present
+    region: "{{ eksexample_region }}"
+    template: "./cloudformation/eks-ingress-controller-iam.template.yaml"
+
+- name: setup service account for alb-ingress-controller
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: >
+    eksctl create iamserviceaccount \
+    --name alb-ingress-controller \
+    --namespace kube-system \
+    --cluster "{{ eksexample_clustername }}" \
+    --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSIngressControllerPolicy" \
+    --approve \
+    --region {{ eksexample_region }} \
+    --override-existing-serviceaccounts
+
+- name: deploy the alb-ingress-controller
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s: 
+    state: present
+    definition: "{{ lookup('template', './k8s/alb-ingress-controller/eks-alb-ingress-controler-{{ item }}.manifest.yaml') | from_yaml }}"
+  loop: 
+    - clusterrole
+    - clusterrolebinding
+    - deployment

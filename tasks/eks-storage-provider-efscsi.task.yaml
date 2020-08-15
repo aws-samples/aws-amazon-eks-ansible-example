@@ -1,0 +1,61 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: get eks cluster vpc
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws eks describe-cluster --name {{ eksexample_clustername }} \
+    --query "cluster.resourcesVpcConfig.vpcId" --output text --region {{ eksexample_region }}
+  register: eks_vpcinfo
+
+- name: get eks cluster vpc cidr
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws ec2 describe-vpcs --vpc-ids {{ eks_vpcinfo.stdout }} \
+    --query "Vpcs[].CidrBlock" --output text --region {{ eksexample_region }}
+  register: eks_vpccidr
+
+- name: get eks private subnet ids
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws ec2 describe-subnets --region {{ eksexample_region }} --filter Name=vpc-id,Values={{ eks_vpcinfo.stdout }} \
+    | jq -r '.Subnets[] | select(.Tags[].Value | contains("SubnetPrivate")) | .SubnetId' | sort -u
+  register: eks_subnetinfo
+
+- name: create efs storage for efs csi
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-storage-provider-efscsi-storage"
+    state: present
+    region: "{{ eksexample_region }}"
+    template: "./cloudformation/eks-storage-provider-efscsi-storage.template.yaml"
+    template_parameters:
+      Ekscidrblock: "{{ eks_vpccidr.stdout }}"
+      Ekssubnetids: "{{ eks_subnetinfo.stdout | replace('\n', ', ') }}"
+      Eksvpcid: "{{ eks_vpcinfo.stdout }}"
+  register: efs_filesystem
+
+- name: Deploy storage providers
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', './k8s/storage-provider-efscsi/eks-storage-provider-efscsi-{{ item }}.manifest.yaml') | from_yaml }}"
+  loop:
+    - csidriver
+    - node
+
+- name: create efs Storage Class
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s: 
+    state: present
+    apply: yes
+    definition:
+      kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: efs-sc
+      provisioner: efs.csi.aws.com

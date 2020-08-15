@@ -1,0 +1,71 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: check if cert already existing on ACM
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws acm list-certificates --region {{ eksexample_region }} \
+    | jq -r '.CertificateSummaryList | .[] | select (.DomainName == "{{ eksexample_hostedzonename }}").DomainName'
+  register: cert_existing
+
+- name: request wildcard SSL Cert on ACM
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws acm request-certificate --domain-name {{ eksexample_hostedzonename }} \
+    --subject-alternative-names *.{{ eksexample_hostedzonename }} --validation-method DNS \
+    --query CertificateArn --region {{ eksexample_region }} --output text
+  when: not cert_existing == eksexample_hostedzonename
+
+- name: get cert arn on ACM
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws acm list-certificates --region {{ eksexample_region }} \
+    | jq -r '.CertificateSummaryList | .[] | select (.DomainName == "{{ eksexample_hostedzonename }}").CertificateArn'
+  register: cert_arn
+
+- name: waiting some seconds cause of AWS ACM latency
+  pause: 
+    seconds: 20
+    
+- name: read ssl cert name
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: >
+    aws acm describe-certificate --region {{ eksexample_region }} \
+    --certificate-arn {{ cert_arn.stdout }} \
+    --query Certificate.DomainValidationOptions[0].ResourceRecord.Name \
+    --output text
+  register: ssl_cert_name
+
+- name: read ssl cert value
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws acm describe-certificate --region {{ eksexample_region }} \
+    --certificate-arn {{ cert_arn.stdout }} \
+    --query Certificate.DomainValidationOptions[0].ResourceRecord.Value \
+    --output text
+  register: ssl_cert_value
+
+- name : create validation record set in route53
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  route53:
+      state: present
+      zone: "{{ eksexample_hostedzonename }}"
+      record: "{{ ssl_cert_name.stdout }}"
+      type: CNAME
+      ttl: 60
+      value: "{{ ssl_cert_value.stdout }}"
+      wait: yes
+      overwrite: 'true'
+
+- name: wait for cert validation
+  delegate_to: "{{ EKSBastionInstancePublicIP }}" 
+  shell: >
+    aws acm wait certificate-validated --region {{ eksexample_region }} --certificate-arn "{{ cert_arn.stdout }}"
+
+- name: save SSL creation outputs to local file for ref 
+  copy: 
+    content: "eksexamplesslarn: {{ cert_arn.stdout }}" 
+    dest: ./vars/dynamic/eksexample_ssl.yaml

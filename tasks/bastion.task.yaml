@@ -1,0 +1,34 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: Create EC2 KeyPair 
+  ec2_key:
+    profile: "{{ eksexample_aws_profilename }}"
+    name: "{{ eksexample_clustername }}-keypair"
+    region: "{{ eksexample_region }}"
+  register: ec2_key_result
+  
+- name: Save Private Key for Bastion Access
+  copy: content="{{ ec2_key_result.key.private_key }}" dest="./secrets/id_rsa_eks" mode=0600
+  when: ec2_key_result.changed
+
+- name: create bastion Environment
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-bastion"
+    state: "present"
+    region: "{{ eksexample_region }}"
+    disable_rollback: false
+    template_parameters:
+      EKSBastionInstanceType: "{{ eksexample_bastion_instancetype }}"
+      EKSBastionKeyPairName: "{{ eksexample_clustername }}-keypair"
+    template: "./cloudformation/eks-bastion.template.yaml"
+  register: bastion_informations
+
+- name: save outputs to local file for ref 
+  copy: 
+    content: "{{ bastion_informations.stack_outputs | to_nice_yaml }}" 
+    dest: ./vars/dynamic/eksexample_bastion.yaml

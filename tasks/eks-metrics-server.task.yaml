@@ -1,0 +1,22 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: Deploy the metrics server
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('file', './k8s/metrics-server/eks-metrics-server-{{ item }}.manifest.yaml') | from_yaml }}"
+  loop: 
+    - serviceaccount
+    - reader-clusterrole
+    - reader-clusterrolebinding
+    - clusterrole
+    - clusterrolebinding
+    - rolebinding
+    - apiservice
+    - deployment
+    - service

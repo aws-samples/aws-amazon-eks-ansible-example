@@ -1,0 +1,6 @@
+secrets/*
+vars/eksexample_*
+vars/*/eksexample_*
+ansible.log
+.vscode
+.DS_Store

@@ -1,0 +1,101 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: create Roles and Policies for ebs csi
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-storage-provider-ebscsi-policy"
+    state: present
+    region: "{{ eksexample_region }}"
+    template: "./cloudformation/eks-storage-provider-ebscsi-iam.template.yaml"
+
+- name: setup service account for ebs csi controller
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: >
+    eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster "{{ eksexample_clustername }}" \
+    --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSStorageProviderEBSCsiPolicy" \
+    --approve \
+    --region {{ eksexample_region }} \
+    --override-existing-serviceaccounts
+
+- name: setup service account for ebs csi snapshot controller
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: >
+    eksctl create iamserviceaccount \
+    --name ebs-snapshot-controller \
+    --namespace kube-system \
+    --cluster "{{ eksexample_clustername }}" \
+    --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSStorageProviderEBSSnapshotPolicy" \
+    --approve \
+    --region {{ eksexample_region }} \
+    --override-existing-serviceaccounts
+
+- name: Deploy storage providers
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', './k8s/storage-provider-ebscsi/eks-storage-provider-ebscsi-{{ item }}.manifest.yaml') | from_yaml }}"
+  loop:
+    - clusterrole-attacher
+    - clusterrole-provisioner
+    - clusterrole-resizer
+    - clusterrole-snapshot-controller
+    - clusterrole-snapshotter
+    - clusterrolebinding-attacher
+    - clusterrolebinding-provisioner
+    - clusterrolebinding-resizer
+    - clusterrolebinding-snapshot-controller
+    - clusterrolebinding-snapshotter
+    - role-snapshot-controller-leaderselection
+    - rolebinding-snapshot-controller-leaderselection
+    - controller
+    - csidriver
+    - node
+    - statefulset
+
+- name: create provisioned iops Storage Class
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s: 
+    state: present
+    apply: yes
+    definition:
+      kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: ebs-io1
+      provisioner: ebs.csi.aws.com
+      volumeBindingMode: WaitForFirstConsumer
+      parameters:
+        csi.storage.k8s.io/fstype: ext4
+        type: io1
+        iopsPerGB: "50"
+        encrypted: "true"
+
+- name: create additional Storage Classes 
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s: 
+    state: present
+    apply: yes
+    definition:
+      kind: StorageClass
+      apiVersion: storage.k8s.io/v1
+      metadata:
+        name: "ebs-{{ item.name }}"
+      provisioner: ebs.csi.aws.com
+      volumeBindingMode: WaitForFirstConsumer
+      parameters:
+        csi.storage.k8s.io/fstype: ext4
+        type: "{{ item.type }}"
+        encrypted: "true"
+
+  loop: 
+    - { name: gp2, type: gp2 }
+    - { name: sc1, type: sc1 }
+    - { name: st1, type: st1 }

@@ -1,0 +1,71 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+AWSTemplateFormatVersion: "2010-09-09"
+Parameters: 
+
+  Ekscidrblock: 
+    Type: String
+    Default: ""
+  Ekssubnetids: 
+    Type:  CommaDelimitedList
+    Default: ""
+  Eksvpcid:
+    Type: String
+    Default: ""
+
+Resources:   
+
+  EksStorageProviderEfscsiSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref Eksvpcid
+      GroupDescription: Security group for the Shared Storage
+
+  EksStorageProviderEfscsiSecurityGroupApplicationPort:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      CidrIp: !Ref Ekscidrblock
+      IpProtocol: tcp
+      FromPort: 2049
+      ToPort: 2049
+      GroupId: !Ref EksStorageProviderEfscsiSecurityGroup
+
+  EksStorageProviderEfscsiFS:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+
+  EksStorageProviderEfscsiMountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: EksStorageProviderEfscsiFS
+      SubnetId: !Select [0, !Ref Ekssubnetids]
+      SecurityGroups:
+        - !Ref EksStorageProviderEfscsiSecurityGroup
+
+  EksStorageProviderEfscsiMountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: EksStorageProviderEfscsiFS
+      SubnetId: !Select [1, !Ref Ekssubnetids]
+      SecurityGroups:
+        - !Ref EksStorageProviderEfscsiSecurityGroup
+
+  EksStorageProviderEfscsiMountTarget3:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId:
+        Ref: EksStorageProviderEfscsiFS
+      SubnetId: !Select [2, !Ref Ekssubnetids]
+      SecurityGroups:
+        - !Ref EksStorageProviderEfscsiSecurityGroup
+Outputs:
+  EksStorageProviderEfscsiFS:
+    Value: !Ref EksStorageProviderEfscsiFS
+    Description: Reference to the created Amazon EFS Volume

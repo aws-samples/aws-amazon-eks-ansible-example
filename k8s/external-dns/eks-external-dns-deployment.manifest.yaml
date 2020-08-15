@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+  namespace: kube-system
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+      - name: external-dns
+        image: registry.opensource.zalan.do/teapot/external-dns:latest
+        args:
+        - --source=service
+        - --source=ingress
+        - --domain-filter={{ eksexample_hostedzonename }}
+        - --provider=aws
+        - --policy=upsert-only 
+        - --aws-zone-type=public 
+        - --registry=txt
+        - --txt-owner-id={{ eksexample_hostedzoneid }}
+      securityContext:
+        fsGroup: 65534

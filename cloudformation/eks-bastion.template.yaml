@@ -1,0 +1,124 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Bastion using public subnet
+Parameters: 
+  EKSLatestAmazonLinuxAmiId:
+    Description: AMI id that should be used for the EC2 instaces
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  EKSBastionInstanceType: 
+    Description: InstanceType and Size for Bastion Host
+    Type: String
+  EKSBastionKeyPairName: 
+    Description: Keypair Name for SSH login
+    Type: String
+
+Resources:
+  EKSBastionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: EKSExample-service
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - cloudformation:*
+            - eks:*
+            - elasticfilesystem:*
+            Resource: "*"
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+      - arn:aws:iam::aws:policy/AmazonRoute53FullAccess
+      - arn:aws:iam::aws:policy/IAMFullAccess
+      - arn:aws:iam::aws:policy/AmazonVPCFullAccess
+      - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+      - arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess
+      Path: "/"
+
+  EKSBastionInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: EKSBastionRole
+
+  EKSBastionInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EKS Bastion ECS Instance Security Group
+
+  EKSBastionInstanceSecurityGroupPorts:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: 
+        Fn::GetAtt: 
+          - EKSBastionInstanceSecurityGroup
+          - GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: 0.0.0.0/0
+
+  EKSBastionInstance: 
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: !Ref EKSLatestAmazonLinuxAmiId
+      IamInstanceProfile: !Ref EKSBastionInstanceProfile
+      InstanceType: !Ref EKSBastionInstanceType
+      KeyName: !Ref EKSBastionKeyPairName
+      SecurityGroups:
+        - !Ref EKSBastionInstanceSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          yum update -y
+          yum -y remove aws-cli
+          yum -y install sqlite telnet jq strace tree gcc glibc-static python python-pip gettext bash-completion
+          
+          pip install -U awscli ansible botocore boto boto3 openshift
+          
+          # install helm on bastion
+          curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+          # install ansible kubernetes community collection
+          ansible-galaxy collection install community.kubernetes
+          
+          # eksctl install
+          curl -sSL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+          mv /tmp/eksctl /usr/local/bin
+
+          # kubectl install
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          mv ./kubectl /usr/local/bin/kubectl
+
+Outputs:
+  EKSBastionInstanceDNSName:
+    Description: The Bastion Host Public DNS Name
+    Value:
+      Fn::GetAtt:
+        - EKSBastionInstance
+        - PublicDnsName
+  EKSBastionInstancePublicIP:
+    Description: The Bastion Host Public DNS Name
+    Value:
+      Fn::GetAtt:
+        - EKSBastionInstance
+        - PublicIp

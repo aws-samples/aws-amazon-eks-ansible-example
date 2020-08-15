@@ -1,0 +1,27 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:   
+
+  EKSExternalDNSPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: EKSExternalDNSPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+            - route53:ChangeResourceRecordSets
+            Resource:
+            - arn:aws:route53:::hostedzone/*
+          - Effect: Allow
+            Action:
+            - route53:ListHostedZones
+            - route53:ListResourceRecordSets
+            Resource:
+            - "*"

@@ -1,0 +1,9 @@
+eksexample_region: eu-central-1
+eksexample_worker_desiredcount: 2
+eksexample_worker_maxcount: 10
+eksexample_worker_mincount: 2
+eksexample_worker_instancetype: t3a.medium
+eksexample_bastion_instancetype: t3a.small
+eksexample_clustername: ansible-eks-testcluster
+eksexample_clusterversion: 1.17
+eksexample_aws_profilename: ansible_static

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: xray-daemon
+  namespace: kube-system
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: xray-daemon
+  template:
+    metadata:
+      labels:
+        app: xray-daemon
+    spec:
+      volumes:
+      - name: config-volume
+        configMap:
+          name: xray-config
+      hostNetwork: true
+      serviceAccountName: xray-daemon
+      containers:
+      - name: xray-daemon
+        image: trevorrobertsjr/eks-workshop-x-ray-daemon:02d13ce10add55081c68b6b76a19b7dfeea00dad
+        imagePullPolicy: Always
+        command: [ "/usr/bin/xray", "-c", "/aws/xray/config.yaml" ]
+        resources:
+          limits:
+            memory: 24Mi
+        ports:
+        - name: xray-ingest
+          containerPort: 2000
+          hostPort: 2000
+          protocol: UDP
+        volumeMounts:
+        - name: config-volume
+          mountPath: /aws/xray
+          readOnly: true

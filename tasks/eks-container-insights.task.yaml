@@ -1,0 +1,51 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: create amazon-cloudwatch namespace
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s: 
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: amazon-cloudwatch
+
+- name: get notegroups rolename 
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: > 
+    aws cloudformation describe-stack-resources --region {{ eksexample_region }} --stack-name eksctl-{{ eksexample_clustername }}-nodegroup-ansible-eks-testcluster-linux-nodes \
+    | jq -r '.StackResources[] | select(.ResourceType=="AWS::IAM::Role") | .PhysicalResourceId'
+  register: eks_nodegroup_role_name
+
+- name: create Roles and Policies for container insights
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-container-insights-policy"
+    state: present
+    region: "{{ eksexample_region }}"
+    template: "./cloudformation/eks-container-insights-iam.template.yaml"
+    template_parameters:
+      nodegroupRoleName: "{{ eks_nodegroup_role_name.stdout }}"
+
+- name: Deploy the container-insights
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', './k8s/container-insights/eks-container-insights-{{ item }}.manifest.yaml') | from_yaml }}"
+  loop: 
+   - serviceaccount-cwagent
+   - serviceaccount-fluentd
+   - clusterrole-cwagent
+   - clusterrolebinding-cwagent
+   - clusterrole-fluentd
+   - clusterrolebinding-fluentd
+   - configmap-cwagentconfig
+   - configmap-clusterinfo
+   - configmap-fluentdconfig
+   - deamonset-cwagent
+   - deamonset-fluentd

@@ -1,0 +1,38 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+- name: create Policies for cluster-autoscaler
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-cluster-autoscaler-policy"
+    state: present
+    region: "{{ eksexample_region }}"
+    template: "./cloudformation/eks-cluster-autoscaler-iam.template.yaml"
+
+- name: setup service account for cluster-autoscaler
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  shell: >
+    eksctl create iamserviceaccount \
+    --name cluster-autoscaler \
+    --namespace kube-system \
+    --cluster "{{ eksexample_clustername }}" \
+    --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSClusterAutoscalerPolicy" \
+    --approve \
+    --region {{ eksexample_region }} \
+    --override-existing-serviceaccounts
+
+- name: Deploy the cluster-autoscaler
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  community.kubernetes.k8s:
+    state: present
+    apply: yes
+    definition: "{{ lookup('template', './k8s/cluster-autoscaler/eks-cluster-autoscaler-{{ item }}.manifest.yaml') | from_yaml }}"
+  loop: 
+   - clusterrole
+   - role
+   - clusterrolebinding
+   - rolebinding
+   - deployment
