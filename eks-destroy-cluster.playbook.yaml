@@ -60,7 +60,7 @@
       loop: 
         - { name: cluster-autoscaler, namespace: kube-system }
         - { name: external-dns, namespace: kube-system }
-        - { name: alb-ingress-controller, namespace: kube-system }
+        - { name: alb-loadbalancer-controller, namespace: kube-system }
         - { name: ebs-csi-controller-sa, namespace: kube-system }
         - { name: ebs-snapshot-controller, namespace: kube-system }
         - { name: xray-daemon, namespace: kube-system }
@@ -76,7 +76,7 @@
         - "{{ eksexample_clustername }}-cluster-autoscaler-policy"
         - "{{ eksexample_clustername }}-container-insights-policy"
         - "{{ eksexample_clustername }}-external-dns-policy"
-        - "{{ eksexample_clustername }}-cluster-ingresscontroller-policy"
+        - "{{ eksexample_clustername }}-cluster-loadbalancercontroller-policy"
         - "{{ eksexample_clustername }}-storage-provider-ebscsi-policy"
         - "{{ eksexample_clustername }}-storage-provider-efscsi-storage"
 
