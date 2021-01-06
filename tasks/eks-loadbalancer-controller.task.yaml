@@ -12,11 +12,11 @@
     region: "{{ eksexample_region }}"
     template: "./cloudformation/eks-loadbalancer-controller-iam-policy.template.yaml"
 
-- name: setup service account for alb-loadbalancer-controller
+- name: setup service account for loadbalancer-controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
     eksctl create iamserviceaccount \
-    --name alb-loadbalancer-controller \
+    --name aws-load-balancer-controller \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \
     --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSloadbalancerControllerPolicy" \
@@ -24,12 +24,14 @@
     --region {{ eksexample_region }} \
     --override-existing-serviceaccounts
 
-- name: deploy the alb-loadbalancer-controller
+- name: deploy the loadbalancer-controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   community.kubernetes.k8s: 
     state: present
-    src: "./k8s/loadbalancer-controller/eks-loadbalancer-controller-{{ item }}.manifest.yaml'"
+    apply: yes
+    definition: "{{ lookup('template', './k8s/loadbalancer-controller/eks-loadbalancer-controller-{{ item }}.manifest.yaml') | from_yaml_all | list }}"
+  loop_control:
+    pause: 10
   loop: 
     - cert-manager
-    - cert-manager-legacy
     - deployment

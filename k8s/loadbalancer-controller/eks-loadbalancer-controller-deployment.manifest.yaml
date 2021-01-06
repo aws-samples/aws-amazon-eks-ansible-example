@@ -265,10 +265,10 @@ rules:
       - create
   - apiGroups:
       - ""
-    resources:
-      - configmaps
     resourceNames:
       - aws-load-balancer-controller-leader
+    resources:
+      - configmaps
     verbs:
       - get
       - update
@@ -392,6 +392,14 @@ rules:
   - apiGroups:
       - networking.k8s.io
     resources:
+      - ingressclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
       - ingresses
     verbs:
       - get
@@ -475,9 +483,9 @@ spec:
     spec:
       containers:
         - args:
-            - --cluster-name=your-cluster-name
+            - --cluster-name=ansible-eks-testcluster
             - --ingress-class=alb
-          image: amazon/aws-alb-ingress-controller:v2.0.0
+          image: amazon/aws-alb-ingress-controller:v2.1.0
           livenessProbe:
             failureThreshold: 2
             httpGet:

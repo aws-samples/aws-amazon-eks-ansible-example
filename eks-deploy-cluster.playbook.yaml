@@ -27,7 +27,7 @@
           - yaml
 
     - name: setup bastion host
-      include_tasks: ./tasks/bastion.tasks.yaml
+      include_tasks: ./tasks/bastion.task.yaml
 
     - name: import dynamic var data
       include_vars:

@@ -17,7 +17,7 @@
     aws acm request-certificate --domain-name {{ eksexample_hostedzonename }} \
     --subject-alternative-names *.{{ eksexample_hostedzonename }} --validation-method DNS \
     --query CertificateArn --region {{ eksexample_region }} --output text
-  when: not cert_existing == eksexample_hostedzonename
+  when: cert_existing.stdout == ""
 
 - name: get cert arn on ACM
   delegate_to: "{{ EKSBastionInstancePublicIP }}"

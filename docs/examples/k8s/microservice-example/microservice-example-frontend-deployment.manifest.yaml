@@ -3,14 +3,12 @@ kind: Deployment
 metadata:
   name: eksdemo-frontend
   labels:
-    app: eksdemo-frontend
-    onfargate: "true"
+    app: eksdemo-fronten
   namespace: eksdemo
 spec:
   selector:
     matchLabels:
       app: eksdemo-frontend
-      onfargate: "true"
   replicas: 2
   strategy:
     rollingUpdate:
@@ -21,7 +19,6 @@ spec:
     metadata:
       labels:
         app: eksdemo-frontend
-        onfargate: "true"
     spec:
       containers:
       - image: brentley/ecsdemo-frontend:latest

@@ -7,10 +7,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Resources:   
 
-  EKSIngressControllerPolicy:
+  EKSloadbalancerControllerPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
-      ManagedPolicyName: EKSIngressControllerPolicy
+      ManagedPolicyName: EKSloadbalancerControllerPolicy
       PolicyDocument:
         Version: 2012-10-17
         Statement:
