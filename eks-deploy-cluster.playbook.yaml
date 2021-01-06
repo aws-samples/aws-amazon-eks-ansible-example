@@ -64,7 +64,7 @@
         - ./tasks/eks-storage-provider-efscsi.task.yaml
         - ./tasks/eks-container-insights.task.yaml
         - ./tasks/eks-cluster-autoscaler.task.yaml
-        - ./tasks/eks-ingress-controller.task.yaml
+        - ./tasks/eks-loadbalancer-controller.task.yaml
         - ./tasks/eks-external-dns.task.yaml
         - ./tasks/eks-metrics-server.task.yaml
         - ./tasks/eks-xray.task.yaml
