@@ -10,7 +10,7 @@ This project demonstrates the deployment of an Amazon EKS cluster and basic serv
 
 ![Architecture](./docs/architecture/EksExampleArchitectureDiagram.png)
 
-## Disclaimber
+## Disclaimer
 This project is an example of an deployment and meant to be used for testing and learning purposes only. Do not use in production.
 
 **Be aware that the deployment is not covered by the AWS free tier. Please use the [AWS pricing calculator](https://calculator.aws/#/estimate) to an estimation beforehand**
@@ -62,7 +62,7 @@ Some static deployment variables are to be altered/placed into the [vars/static/
 | eksexample_worker_instancetype | t3a.medium | instance size of the worker nodes |
 | eksexample_bastion_instancetype | t3a.small | instance size of the bastion host |
 | eksexample_clustername | ansible-eks-testcluster | name of the Amazon EKS cluster |
-| eksexample_clusterversion | 1.17 | version of the Amazon EKS cluster | versions <1.16 are not tested with this automation
+| eksexample_clusterversion | 1.18 | version of the Amazon EKS cluster | versions <1.16 are not tested with this automation
 | eksexample_aws_profilename | ansible | the [profile name setup](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) for the local awscli | i recommend to setup a local profile. if you decide to shift it directly to instance_profile based EC2 admin instances, alter the ansible module parameters to not use "profile:" 
 
 rename the [vars/static/custom_definitions.yaml](vars/static/custom_definitions.yaml.example) and alter the parameters according to your needs
