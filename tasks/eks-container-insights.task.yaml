@@ -6,7 +6,7 @@
 
 - name: create amazon-cloudwatch namespace
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
+  community.kubernetes.k8s:
     state: present
     definition:
       apiVersion: v1
@@ -14,10 +14,10 @@
       metadata:
         name: amazon-cloudwatch
 
-- name: get notegroups rolename 
+- name: get notegroups rolename
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  shell: > 
-    aws cloudformation describe-stack-resources --region {{ eksexample_region }} --stack-name eksctl-{{ eksexample_clustername }}-nodegroup-ansible-eks-testcluster-linux-nodes \
+  shell: >
+    aws cloudformation describe-stack-resources --region {{ eksexample_region }} --stack-name eksctl-{{ eksexample_clustername }}-nodegroup-{{ eksexample_clustername }}-linux-nodes \
     | jq -r '.StackResources[] | select(.ResourceType=="AWS::IAM::Role") | .PhysicalResourceId'
   register: eks_nodegroup_role_name
 
@@ -37,7 +37,7 @@
     state: present
     apply: yes
     definition: "{{ lookup('template', './k8s/container-insights/eks-container-insights-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop: 
+  loop:
    - serviceaccount-cwagent
    - serviceaccount-fluentd
    - clusterrole-cwagent
