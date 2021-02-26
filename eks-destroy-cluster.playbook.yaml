@@ -8,7 +8,7 @@
   hosts: localhost
   gather_facts: no
 
-  vars: 
+  vars:
     ansible_ssh_private_key_file: "./secrets/id_rsa_eks"
     ansible_user: ec2-user
 
@@ -45,11 +45,11 @@
 
     - name: check if eks cluster setup
       delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      shell: eksctl get cluster --region {{ eksexample_region }}
+      shell: eksctl get cluster --region {{ eksexample_region }} --verbose 0
       register: eks_check_output
 
     - name: remove iamserviceaccounts via eksctl
-      delegate_to: "{{ EKSBastionInstancePublicIP }}" 
+      delegate_to: "{{ EKSBastionInstancePublicIP }}"
       shell: >
         eksctl delete iamserviceaccount \
         --name {{ item.name }} \
@@ -57,7 +57,7 @@
         --cluster "{{ eksexample_clustername }}" \
         --wait \
         --region {{ eksexample_region }}
-      loop: 
+      loop:
         - { name: cluster-autoscaler, namespace: kube-system }
         - { name: external-dns, namespace: kube-system }
         - { name: alb-loadbalancer-controller, namespace: kube-system }
@@ -72,7 +72,7 @@
         profile: "{{ eksexample_aws_profilename }}"
         stack_name: "{{ item }}"
         state: "absent"
-      loop: 
+      loop:
         - "{{ eksexample_clustername }}-cluster-autoscaler-policy"
         - "{{ eksexample_clustername }}-container-insights-policy"
         - "{{ eksexample_clustername }}-external-dns-policy"
@@ -82,7 +82,7 @@
 
     - name: check if cert exists on ACM
       delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      shell: > 
+      shell: >
         aws acm list-certificates --region {{ eksexample_region }} \
         | jq -r ".CertificateSummaryList | .[] | select (.DomainName == \"{{ eksexample_hostedzonename }}\").CertificateArn"
       register: cert_existing
@@ -94,9 +94,9 @@
         --query Certificate.DomainValidationOptions --region {{ eksexample_region }} | jq -r ".[] | select(.DomainName == \"{{ eksexample_hostedzonename }}\").ResourceRecord.Name"
       register: ssl_cert_name
       when: cert_existing.stdout
-    
+
     - name: remove ACM Certfificate
-      delegate_to: "{{ EKSBastionInstancePublicIP }}" 
+      delegate_to: "{{ EKSBastionInstancePublicIP }}"
       shell: >
         aws acm delete-certificate --region {{ eksexample_region }} --certificate-arn "{{ cert_existing.stdout }}"
       when: cert_existing.stdout
@@ -137,7 +137,7 @@
         paths: ./vars/dynamic/
         patterns: "*"
       register: files_to_delete
-  
+
     - name: remove dynamic var files
       file:
         path: "{{ item.path }}"
@@ -145,6 +145,6 @@
       with_items: "{{ files_to_delete.files }}"
 
     - name: delete local secret file
-      file: 
+      file:
         path: ./secrets/id_rsa_eks
         state: absent

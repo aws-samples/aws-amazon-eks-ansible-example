@@ -6,7 +6,7 @@
 
 - name: check if eks cluster setup
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  shell: eksctl get cluster --region {{ eksexample_region }}
+  shell: eksctl get cluster --region {{ eksexample_region }} --verbose 0
   register: eks_check_output
 
 - name: create the eks cluster
