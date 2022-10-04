@@ -24,14 +24,20 @@
     --region {{ eksexample_region }} \
     --override-existing-serviceaccounts
 
-- name: deploy the loadbalancer-controller
+- name: add the AWS Loadbalancer Controller helm repo
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
-    state: present
-    apply: yes
-    definition: "{{ lookup('template', './k8s/loadbalancer-controller/eks-loadbalancer-controller-{{ item }}.manifest.yaml') | from_yaml_all | list }}"
-  loop_control:
-    pause: 10
-  loop: 
-    - cert-manager
-    - deployment
+  kubernetes.core.helm_repository:
+    name: aws-load-balancer-controller
+    repo_url: "https://aws.github.io/eks-charts"
+
+- name: Deploy latest version of AWS Loadbalancer Controller chart inside kube-system namespace
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.helm:
+    name: aws-load-balancer-controller
+    chart_ref: aws-load-balancer-controller/aws-load-balancer-controller
+    release_namespace: kube-system
+    values: 
+      clusterName: "{{ eksexample_clustername }}"
+      serviceAccount:
+        create: false 
+        name: aws-load-balancer-controller

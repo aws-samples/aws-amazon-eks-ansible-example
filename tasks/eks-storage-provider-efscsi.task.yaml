@@ -25,6 +25,14 @@
     | jq -r '.Subnets[] | select(.Tags[].Value | contains("SubnetPrivate")) | .SubnetId' | sort -u
   register: eks_subnetinfo
 
+- name: create Roles and Policies for efs csi
+  cloudformation:
+    profile: "{{ eksexample_aws_profilename }}"
+    stack_name: "{{ eksexample_clustername }}-storage-provider-efscsi-policy"
+    state: present
+    region: "{{ eksexample_region }}"
+    template: "./cloudformation/eks-storage-provider-efscsi-iam.template.yaml"
+
 - name: create efs storage for efs csi
   cloudformation:
     profile: "{{ eksexample_aws_profilename }}"
@@ -38,19 +46,39 @@
       Eksvpcid: "{{ eks_vpcinfo.stdout }}"
   register: efs_filesystem
 
-- name: Deploy storage providers
+- name: setup service account for efs csi controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
-    state: present
-    apply: yes
-    definition: "{{ lookup('template', './k8s/storage-provider-efscsi/eks-storage-provider-efscsi-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop:
-    - csidriver
-    - node
+  shell: >
+    eksctl create iamserviceaccount \
+    --name efs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster "{{ eksexample_clustername }}" \
+    --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSStorageProviderEFSCsiPolicy" \
+    --approve \
+    --region {{ eksexample_region }} \
+    --override-existing-serviceaccounts
+
+- name: add the EFS CSI Driver helm repo
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.helm_repository:
+    name: aws-efs-csi-driver
+    repo_url: "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
+
+- name: Deploy latest version of AWS EFS CSI Driver chart inside kube-system namespace
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.helm:
+    name: aws-efs-csi-driver
+    chart_ref: aws-efs-csi-driver/aws-efs-csi-driver
+    release_namespace: kube-system
+    values: 
+      controller: 
+        serviceAccount:
+          create: false 
+          name: efs-csi-controller-sa
 
 - name: create efs Storage Class
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
+  kubernetes.core.k8s: 
     state: present
     apply: yes
     definition:

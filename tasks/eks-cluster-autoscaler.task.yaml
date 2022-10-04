@@ -24,15 +24,20 @@
     --region {{ eksexample_region }} \
     --override-existing-serviceaccounts
 
-- name: Deploy the cluster-autoscaler
+- name: add the cluster-autoscaler helm repo
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
-    state: present
-    apply: yes
-    definition: "{{ lookup('template', './k8s/cluster-autoscaler/eks-cluster-autoscaler-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop: 
-   - clusterrole
-   - role
-   - clusterrolebinding
-   - rolebinding
-   - deployment
+  kubernetes.core.helm_repository:
+    name: autoscaler
+    repo_url: "https://kubernetes.github.io/autoscaler"
+
+- name: Deploy latest version of the cluster-autoscaler chart inside kube-system namespace
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.helm:
+    name: cluster-autoscaler
+    chart_ref: autoscaler/cluster-autoscaler 
+    release_namespace: kube-system
+    values: 
+      clusterName: "{{ eksexample_clustername }}"
+      serviceAccount:
+        create: false 
+        name: cluster-autoscaler

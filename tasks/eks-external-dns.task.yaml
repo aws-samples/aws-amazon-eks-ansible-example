@@ -24,13 +24,19 @@
     --region {{ eksexample_region }} \
     --override-existing-serviceaccounts
 
-- name: Deploy external-dns
+- name: add the external-dns helm repo
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
-    state: present
-    apply: yes
-    definition: "{{ lookup('template', './k8s/external-dns/eks-external-dns-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop:
-    - clusterrole
-    - clusterrolebinding
-    - deployment
+  kubernetes.core.helm_repository:
+    name: external-dns
+    repo_url: "https://kubernetes-sigs.github.io/external-dns/"
+
+- name: Deploy latest version of the external-dns chart inside kube-system namespace
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.helm:
+    name: external-dns
+    chart_ref: external-dns/external-dns
+    release_namespace: kube-system
+    values: 
+      serviceAccount:
+        create: false 
+        name: external-dns

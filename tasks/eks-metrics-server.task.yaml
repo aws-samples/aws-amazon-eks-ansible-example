@@ -4,19 +4,16 @@
 ## created by David Surey, Amazon Web Services, 2020       ##
 #############################################################
 
-- name: Deploy the metrics server
+# Download and apply manifest
+- name: Download metrics-server manifest to the cluster.
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
+  ansible.builtin.get_url:
+    url: https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    dest: ~/metrics-server.yaml
+    mode: '0664'
+
+- name: Apply metrics-server manifest to the cluster.
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.k8s:
     state: present
-    apply: yes
-    definition: "{{ lookup('file', './k8s/metrics-server/eks-metrics-server-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop: 
-    - serviceaccount
-    - reader-clusterrole
-    - reader-clusterrolebinding
-    - clusterrole
-    - clusterrolebinding
-    - rolebinding
-    - apiservice
-    - deployment
-    - service
+    src: ~/metrics-server.yaml

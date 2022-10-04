@@ -6,7 +6,7 @@
 
 - name: create amazon-cloudwatch namespace
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
+  kubernetes.core.k8s:
     state: present
     definition:
       apiVersion: v1
@@ -31,21 +31,31 @@
     template_parameters:
       nodegroupRoleName: "{{ eks_nodegroup_role_name.stdout }}"
 
-- name: Deploy the container-insights
+- name: Download cloudwatch insights manifests to the cluster.
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluent-bit-quickstart.yaml
+    dest: ~/cwagent-fluent-bit-quickstart.yaml
+    mode: '0664'
+
+- name: Replace variables with values
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  ansible.builtin.replace:
+    path: ~/cwagent-fluent-bit-quickstart.yaml
+    regexp: "{{ item.key }}"
+    replace: "{{ item.value }}"
+  loop: "{{ replace_data | dict2items }}"
+  vars: 
+    replace_data: 
+      '\{\{cluster_name\}\}': "'{{ eksexample_clustername }}'"
+      '\{\{region_name\}\}': "'{{ eksexample_region }}'"
+      '\{\{http_server_toggle\}\}': "'On'"
+      '\{\{read_from_tail\}\}': "'On'"
+      '\{\{read_from_head\}\}': "'Off'"
+      '\{\{http_server_port\}\}': "'2020'"
+
+- name: Apply the container insights manifest to the cluster.
+  delegate_to: "{{ EKSBastionInstancePublicIP }}"
+  kubernetes.core.k8s:
     state: present
-    apply: yes
-    definition: "{{ lookup('template', './k8s/container-insights/eks-container-insights-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop:
-   - serviceaccount-cwagent
-   - serviceaccount-fluentd
-   - clusterrole-cwagent
-   - clusterrolebinding-cwagent
-   - clusterrole-fluentd
-   - clusterrolebinding-fluentd
-   - configmap-cwagentconfig
-   - configmap-clusterinfo
-   - configmap-fluentdconfig
-   - deamonset-cwagent
-   - deamonset-fluentd
+    src: ~/cwagent-fluent-bit-quickstart.yaml

@@ -27,7 +27,7 @@
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
     eksctl utils write-kubeconfig \
-    --name {{ eksexample_clustername }} \
+    --cluster {{ eksexample_clustername }} \
     --region {{ eksexample_region }}
   when: not eks_check_output.stdout == "No clusters found"
 

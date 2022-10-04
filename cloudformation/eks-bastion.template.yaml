@@ -90,15 +90,16 @@ Resources:
 
           yum update -y
           yum -y remove aws-cli
-          yum -y install sqlite telnet jq strace tree gcc glibc-static python python-pip gettext bash-completion
+          yum -y install sqlite telnet jq strace tree gcc glibc-static gettext bash-completion
           
-          pip install -U awscli ansible botocore boto boto3 openshift
-          
+          pip3 install -U awscli ansible botocore boto boto3 openshift pyyaml
+          update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+
           # install helm on bastion
           curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
           # install ansible kubernetes community collection
-          ansible-galaxy collection install community.kubernetes
+          /usr/local/bin/ansible-galaxy collection install kubernetes.core
           
           # eksctl install
           curl -sSL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
