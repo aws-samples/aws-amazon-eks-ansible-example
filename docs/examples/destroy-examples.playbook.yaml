@@ -50,7 +50,7 @@
 
     - name: delete eksdemo namespace
       delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      community.kubernetes.k8s: 
+      kubernetes.core.k8s: 
         state: absent
         definition:
           apiVersion: v1
