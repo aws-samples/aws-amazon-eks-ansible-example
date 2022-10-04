@@ -1,6 +1,7 @@
 secrets/*
 vars/eksexample_*
 vars/*/eksexample_*
+vars/static/custom_definitions.yaml
 ansible.log
 .vscode
 .DS_Store
