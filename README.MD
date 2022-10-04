@@ -94,7 +94,7 @@ The Deployment consists of one main playbook triggering multible tasks, cloudfor
 - eks-cluster-autoscaler.task.yaml: setup of the [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
 - eks-container-instights.task.yaml: enable [container insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html) for the Amazon EKS cluster
 - eks-external-dns.task.yaml: setup of the Route53 automation via [external-dns](https://github.com/kubernetes-sigs/external-dns)
-- eks-ingress-controller.task.yaml: setup of the [alb-ingress-controller](https://github.com/kubernetes-sigs/aws-alb-ingress-controller) to automate service exposure
+- eks-ingress-controller.task.yaml: setup of the [aws-load-balancer-controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller) to automate service exposure
 - eks-metrics-server.task.yaml: setup of the metrics server used by the [Horizontal Pod Autoscaler](https://kubernetes.io/de/docs/tasks/run-application/horizontal-pod-autoscale/)
 - eks-storage-provider-ebscsi.task.yaml: setup of the [Amazon Elastic Block Store (EBS) CSI driver](https://github.com/kubernetes-sigs/aws-ebs-csi-driver). The driver will ensure automatic provisioning of persistent block storage volumes for workloads
 - eks-storage-provider-efscsi.task.yaml: setup of the [Amazon EFS CSI driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver). The driver will ensure automatic provisioning of persistent shared storage volumes for workloads
@@ -105,7 +105,7 @@ The Deployment consists of one main playbook triggering multible tasks, cloudfor
 - eks-cluster-autoscaler-iam.template.yaml: provisioning of the IAM Policy granting access for the cluster autoscaler to Amazon EC2 and EC2 Autoscaling groups. 
 - eks-container-insights-iam.template.yaml: provisioning of the IAM Policy allowing Amazon Cloudwatch Access via the Worker Nodes
 - eks-external-dns-iam.template.yaml: provisioning of the IAM Policy granting access for the external-dns pods to Route53
-- eks-ingress-controller-iam.template.yaml: provisioning of the IAM Policy granting access for the alb-ingress-controller towards Elastic Load Balancing
+- eks-ingress-controller-iam.template.yaml: provisioning of the IAM Policy granting access for the aws-load-balancer-controller towards Elastic Load Balancing
 - eks-storage-provider-ebscsi-iam.template.yaml: IAM Policies to Allow EBS Access via the CSI Driver Deployment
 - eks-storage-provider-efscsi-storage.template.yaml: provisioning of the EFS FileSystem, Mountpoints and related Securitygroups
 
@@ -146,7 +146,7 @@ kubectl get pod -o=wide -n kube-system
 which should show something like: 
 ```
 NAME                                      READY   STATUS    RESTARTS   AGE     IP               NODE                                              NOMINATED NODE   READINESS GATES
-alb-ingress-controller-7568799df8-pnch4   1/1     Running   0          7m30s   192.168.45.158   ip-192-168-43-140.eu-central-1.compute.internal   <none>           <none>
+aws-load-balancer-controller-7568799df8-pnch4   1/1     Running   0          7m30s   192.168.45.158   ip-192-168-43-140.eu-central-1.compute.internal   <none>           <none>
 aws-node-7vg6h                            1/1     Running   0          17m     192.168.93.136   ip-192-168-93-136.eu-central-1.compute.internal   <none>           <none>
 aws-node-scl29                            1/1     Running   0          17m     192.168.43.140   ip-192-168-43-140.eu-central-1.compute.internal   <none>           <none>
 cluster-autoscaler-7884f5ff6d-k6vpw       1/1     Running   0          8m44s   192.168.68.113   ip-192-168-93-136.eu-central-1.compute.internal   <none>           <none>
@@ -172,23 +172,23 @@ if everything is cool it should look like:
 AWS ALB Ingress controller
   Release:    v1.1.8
   Build:      git-ec387ad1
-  Repository: https://github.com/kubernetes-sigs/aws-alb-ingress-controller.git
+  Repository: https://github.com/kubernetes-sigs/aws-load-balancer-controller.git
 -------------------------------------------------------------------------------
 
 W0813 14:32:48.050307       1 client_config.go:549] Neither --kubeconfig nor --master was specified.  Using the inClusterConfig.  This might not work.
-I0813 14:32:48.096117       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"={"Type":{"metadata":{"creationTimestamp":null}}}
-I0813 14:32:48.096518       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{},"status":{"loadBalancer":{}}}}
-I0813 14:32:48.096622       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"=
-I0813 14:32:48.096910       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{},"status":{"loadBalancer":{}}}}
-I0813 14:32:48.096963       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"=
-I0813 14:32:48.097188       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"={"Type":{"metadata":{"creationTimestamp":null}}}
-I0813 14:32:48.098011       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{},"status":{"daemonEndpoints":{"kubeletEndpoint":{"Port":0}},"nodeInfo":{"machineID":"","systemUUID":"","bootID":"","kernelVersion":"","osImage":"","containerRuntimeVersion":"","kubeletVersion":"","kubeProxyVersion":"","operatingSystem":"","architecture":""}}}}
-I0813 14:32:48.103658       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="alb-ingress-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{"containers":null},"status":{}}}
+I0813 14:32:48.096117       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"={"Type":{"metadata":{"creationTimestamp":null}}}
+I0813 14:32:48.096518       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{},"status":{"loadBalancer":{}}}}
+I0813 14:32:48.096622       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"=
+I0813 14:32:48.096910       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{},"status":{"loadBalancer":{}}}}
+I0813 14:32:48.096963       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"=
+I0813 14:32:48.097188       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"={"Type":{"metadata":{"creationTimestamp":null}}}
+I0813 14:32:48.098011       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{},"status":{"daemonEndpoints":{"kubeletEndpoint":{"Port":0}},"nodeInfo":{"machineID":"","systemUUID":"","bootID":"","kernelVersion":"","osImage":"","containerRuntimeVersion":"","kubeletVersion":"","kubeProxyVersion":"","operatingSystem":"","architecture":""}}}}
+I0813 14:32:48.103658       1 controller.go:121] kubebuilder/controller "level"=0 "msg"="Starting EventSource"  "controller"="aws-load-balancer-controller" "source"={"Type":{"metadata":{"creationTimestamp":null},"spec":{"containers":null},"status":{}}}
 I0813 14:32:48.105447       1 leaderelection.go:205] attempting to acquire leader lease  kube-system/ingress-controller-leader-alb...
 I0813 14:32:48.119414       1 leaderelection.go:214] successfully acquired lease kube-system/ingress-controller-leader-alb
-I0813 14:32:48.119775       1 recorder.go:53] kubebuilder/manager/events "level"=1 "msg"="Normal"  "message"="alb-ingress-controller-7568799df8-pnch4_dc09d9d6-dd71-11ea-a82f-6e94ec7ac6f2 became leader" "object"={"kind":"ConfigMap","namespace":"kube-system","name":"ingress-controller-leader-alb","uid":"5e3275ce-3936-411a-9de5-4503c2223c8b","apiVersion":"v1","resourceVersion":"3156"} "reason"="LeaderElection"
-I0813 14:32:48.222253       1 controller.go:134] kubebuilder/controller "level"=0 "msg"="Starting Controller"  "controller"="alb-ingress-controller"
-I0813 14:32:48.322547       1 controller.go:154] kubebuilder/controller "level"=0 "msg"="Starting workers"  "controller"="alb-ingress-controller" "worker count"=1
+I0813 14:32:48.119775       1 recorder.go:53] kubebuilder/manager/events "level"=1 "msg"="Normal"  "message"="aws-load-balancer-controller-7568799df8-pnch4_dc09d9d6-dd71-11ea-a82f-6e94ec7ac6f2 became leader" "object"={"kind":"ConfigMap","namespace":"kube-system","name":"ingress-controller-leader-alb","uid":"5e3275ce-3936-411a-9de5-4503c2223c8b","apiVersion":"v1","resourceVersion":"3156"} "reason"="LeaderElection"
+I0813 14:32:48.222253       1 controller.go:134] kubebuilder/controller "level"=0 "msg"="Starting Controller"  "controller"="aws-load-balancer-controller"
+I0813 14:32:48.322547       1 controller.go:154] kubebuilder/controller "level"=0 "msg"="Starting workers"  "controller"="aws-load-balancer-controller" "worker count"=1
 ```
 if you replace *alb-ingress* with *external-dns* or *cluster-autoscaler* you can use the same command to get the logs of these extensions as well. 
 
@@ -257,7 +257,7 @@ There are many other things to try out. Feel free to share your ideas :)
     - [eksctl](https://github.com/weaveworks/eksctl)
     - [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
     - [external-dns](https://github.com/kubernetes-sigs/external-dns)
-    - [alb-ingress-controller](https://github.com/kubernetes-sigs/aws-alb-ingress-controller)
+    - [aws-load-balancer-controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)
     - [Horizontal Pod Autoscaler](https://kubernetes.io/de/docs/tasks/run-application/horizontal-pod-autoscale/)
     - [Amazon EFS CSI driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
     - [Amazon Elastic Block Store (EBS) CSI driver](https://github.com/kubernetes-sigs/aws-ebs-csi-driver)

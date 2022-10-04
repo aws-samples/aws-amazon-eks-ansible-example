@@ -15,7 +15,7 @@
 - name: setup service account for cluster-autoscaler
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    eksctl  create iamserviceaccount \
     --name cluster-autoscaler \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \

@@ -6,13 +6,16 @@
 
 - name: check if eks cluster setup
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  shell: eksctl get cluster --region {{ eksexample_region }} --verbose 0
+  shell: eksctl  get cluster --region {{ eksexample_region }} --verbose 0
   register: eks_check_output
+  retries: 20
+  delay: 10
+  until: "eks_check_output is not failed"
 
 - name: create the eks cluster
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create cluster \
+    eksctl  create cluster \
     --name {{ eksexample_clustername }} \
     --version {{ eksexample_clusterversion }} \
     --region {{ eksexample_region }} \
@@ -26,7 +29,7 @@
 - name: write the kube config
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl utils write-kubeconfig \
+    eksctl  utils write-kubeconfig \
     --cluster {{ eksexample_clustername }} \
     --region {{ eksexample_region }}
   when: not eks_check_output.stdout == "No clusters found"
@@ -34,7 +37,7 @@
 - name: add the oidc provider for iam
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl utils associate-iam-oidc-provider \
+    eksctl  utils associate-iam-oidc-provider \
     --cluster {{ eksexample_clustername }} \
     --region {{ eksexample_region }} \
     --approve
@@ -43,7 +46,7 @@
 - name: enable cloudwatch logging
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl utils update-cluster-logging \
+    eksctl  utils update-cluster-logging \
     --cluster {{ eksexample_clustername }} \
     --enable-types all \
     --approve \

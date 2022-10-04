@@ -6,14 +6,14 @@
 
 - name: get eks cluster vpc
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  shell: > 
+  shell: >
     aws eks describe-cluster --name {{ eksexample_clustername }} \
     --query "cluster.resourcesVpcConfig.vpcId" --output text --region {{ eksexample_region }}
   register: eks_vpcinfo
 
 - name: get eks cluster vpc cidr
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  shell: > 
+  shell: >
     aws ec2 describe-vpcs --vpc-ids {{ eks_vpcinfo.stdout }} \
     --query "Vpcs[].CidrBlock" --output text --region {{ eksexample_region }}
   register: eks_vpccidr
@@ -49,7 +49,8 @@
 - name: setup service account for efs csi controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    . /home/ec2-user/.bashrc && \
+    eksctl  create iamserviceaccount \
     --name efs-csi-controller-sa \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \

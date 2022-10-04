@@ -15,7 +15,7 @@
 - name: setup service account for external-dns
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    eksctl  create iamserviceaccount \
     --name external-dns \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \

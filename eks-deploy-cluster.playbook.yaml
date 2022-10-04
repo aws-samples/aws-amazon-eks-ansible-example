@@ -44,27 +44,13 @@
         delay: 120
       when: bastion_informations.changed
 
-    - name: wait for the bastion to be booted 
-      wait_for:
-        host: "{{ EKSBastionInstancePublicIP }}"
-        port: 22
-        timeout: 300
-      when: not bastion_informations.changed
-
-    - name: kill bastion cached ssh connection
-      local_action: >
-        shell ssh -O stop {{ EKSBastionInstancePublicIP }}
-        -o ControlPath=~/.ssh/ansible-ec2-user@{{ EKSBastionInstancePublicIP }}:22
-      run_once: yes
-      register: socket_removal
-      when: bastion_informations.changed
-    
     - name: Get AWS Account Information
       delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      retries: 10
-      delay: 2
       aws_caller_info:
       register: caller_info
+      retries: 20
+      delay: 10
+      until: "caller_info is not failed"
 
     - name: setup the EKS Cluster and additional extensions of the cluster infrastructure
       include_tasks: "{{ item }}"

@@ -9,7 +9,7 @@
   gather_facts: no
 
   vars: 
-    ansible_ssh_private_key_file: "../../secrets/id_rsa_eks"
+    ansible_ssh_private_key_file: "./secrets/id_rsa_eks"
     ansible_user: ec2-user
     
   tasks:
@@ -21,14 +21,14 @@
 
     - name: import static var data
       include_vars:
-        dir: ../../vars/static
+        dir: ./vars/static
         ignore_unknown_extensions: True
         extensions:
           - yaml
 
     - name: import dynamic var data
       include_vars:
-        dir: ../../vars/dynamic
+        dir: ./vars/dynamic
         ignore_unknown_extensions: True
         extensions:
           - yaml
@@ -41,4 +41,4 @@
     - name: setup kube services
       include_tasks: "{{ item }}"
       loop:
-        - ./tasks/microservice-example.task.yaml
+        - ./docs/examples/tasks/microservice-example.task.yaml

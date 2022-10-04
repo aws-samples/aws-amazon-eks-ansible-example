@@ -15,7 +15,7 @@
 - name: setup service account for loadbalancer-controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    eksctl  create iamserviceaccount \
     --name aws-load-balancer-controller \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \

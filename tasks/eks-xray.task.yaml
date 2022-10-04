@@ -7,7 +7,7 @@
 - name: setup service account for x-ray
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    eksctl  create iamserviceaccount \
     --name xray-daemon \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \

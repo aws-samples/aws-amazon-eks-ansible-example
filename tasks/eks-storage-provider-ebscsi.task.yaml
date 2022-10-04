@@ -15,7 +15,7 @@
 - name: setup service account for ebs csi controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    eksctl  create iamserviceaccount \
     --name ebs-csi-controller-sa \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \
