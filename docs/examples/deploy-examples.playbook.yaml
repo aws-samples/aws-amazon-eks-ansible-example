@@ -9,15 +9,15 @@
   gather_facts: no
 
   vars: 
-    ansible_ssh_private_key_file: "../../secrets/id_rsa_eks"
+    ansible_ssh_private_key_file: "./secrets/id_rsa_eks"
     ansible_user: ec2-user
     
   tasks:
     - name: check ansible version
-      when: (ansible_version.major == 2 and ansible_version.minor < 8 ) or (ansible_version.major < 2)
+      when: (ansible_version.major == 2 and ansible_version.minor < 10 ) or (ansible_version.major < 2)
       run_once: yes
       fail:
-        msg: Please use Ansible 2.8 or newer
+        msg: Please use Ansible 2.10 or newer
 
     - name: import static var data
       include_vars:

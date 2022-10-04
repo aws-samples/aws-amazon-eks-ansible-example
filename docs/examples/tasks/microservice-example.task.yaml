@@ -6,7 +6,7 @@
 
 - name: create eksdemo namespace
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
+  kubernetes.core.k8s: 
     state: present
     definition:
       apiVersion: v1
@@ -14,29 +14,9 @@
       metadata:
         name: eksdemo
 
-#- name: check for fargate profile at the eks cluster
-#  delegate_to: "{{ EKSBastionInstancePublicIP }}"
-#  shell: >
-#    eksctl get fargateprofile --cluster "{{ eksexample_clustername }}" \
-#    --region {{ eksexample_region }} \
-#    --name eksdemo
-#  register: eks_check_fargateprofile
-#  ignore_errors: yes
-#
-#- name: setup fargate profile for our eksdemo
-#  delegate_to: "{{ EKSBastionInstancePublicIP }}"
-#  shell: >
-#    eksctl create fargateprofile \
-#    --name eksdemo \
-#    --namespace eksdemo \
-#    --cluster "{{ eksexample_clustername }}" \
-#    --labels onfargate=true \
-#    --region {{ eksexample_region }} 
-#  when: eks_check_fargateprofile.rc == 1
-
 - name: create eksdemo deployment
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:    
+  kubernetes.core.k8s:    
     state: present
     apply: yes
     definition: "{{ lookup('template', './k8s/microservice-example/microservice-example-{{ item }}.manifest.yaml') | from_yaml }}"
@@ -51,7 +31,7 @@
 
 - name: create eksdemo horizontal scaling
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
+  kubernetes.core.k8s: 
     state: present
     apply: yes
     definition: "{{ lookup('template', './k8s/microservice-example/microservice-example-hpa.manifest.yaml') | from_yaml }}"

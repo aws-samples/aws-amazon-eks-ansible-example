@@ -24,10 +24,10 @@
         msg: cancelled
 
     - name: check ansible version
-      when: (ansible_version.major == 2 and ansible_version.minor < 8 ) or (ansible_version.major < 2)
+      when: (ansible_version.major == 2 and ansible_version.minor < 10 ) or (ansible_version.major < 2)
       run_once: yes
       fail:
-        msg: Please use Ansible 2.8 or newer
+        msg: Please use Ansible 2.10 or newer
 
     - name: import static var data
       include_vars:
@@ -60,9 +60,9 @@
       loop:
         - { name: cluster-autoscaler, namespace: kube-system }
         - { name: external-dns, namespace: kube-system }
-        - { name: alb-loadbalancer-controller, namespace: kube-system }
+        - { name: aws-load-balancer-controller, namespace: kube-system }
         - { name: ebs-csi-controller-sa, namespace: kube-system }
-        - { name: ebs-snapshot-controller, namespace: kube-system }
+        - { name: efs-csi-controller-sa, namespace: kube-system }
         - { name: xray-daemon, namespace: kube-system }
       when: not eks_check_output.stdout == "No clusters found"
 
@@ -78,6 +78,7 @@
         - "{{ eksexample_clustername }}-external-dns-policy"
         - "{{ eksexample_clustername }}-cluster-loadbalancercontroller-policy"
         - "{{ eksexample_clustername }}-storage-provider-ebscsi-policy"
+        - "{{ eksexample_clustername }}-storage-provider-efscsi-policy"
         - "{{ eksexample_clustername }}-storage-provider-efscsi-storage"
 
     - name: check if cert exists on ACM

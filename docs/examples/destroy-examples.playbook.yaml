@@ -9,7 +9,7 @@
   gather_facts: no
 
   vars: 
-    ansible_ssh_private_key_file: "../../secrets/id_rsa_eks"
+    ansible_ssh_private_key_file: "./secrets/id_rsa_eks"
     ansible_user: ec2-user
     
   vars_prompt:
@@ -24,10 +24,10 @@
         msg: cancelled
 
     - name: check ansible version
-      when: (ansible_version.major == 2 and ansible_version.minor < 8 ) or (ansible_version.major < 2)
+      when: (ansible_version.major == 2 and ansible_version.minor < 10 ) or (ansible_version.major < 2)
       run_once: yes
       fail:
-        msg: Please use Ansible 2.8 or newer
+        msg: Please use Ansible 2.10 or newer
 
     - name: import static var data
       include_vars:
@@ -50,28 +50,10 @@
 
     - name: delete eksdemo namespace
       delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      community.kubernetes.k8s: 
+      kubernetes.core.k8s: 
         state: absent
         definition:
           apiVersion: v1
           kind: Namespace
           metadata:
             name: eksdemo
-    
-    - name: check for fargate profile at the eks cluster
-      delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      shell: >
-        eksctl get fargateprofile --cluster "{{ eksexample_clustername }}" \
-        --region {{ eksexample_region }} \
-        --name eksdemo
-      register: eks_check_fargateprofile
-      ignore_errors: yes
-    
-    - name: delete fargate profile for our eksdemo
-      delegate_to: "{{ EKSBastionInstancePublicIP }}"
-      shell: >
-        eksctl delete fargateprofile \
-        --name eksdemo \
-        --cluster "{{ eksexample_clustername }}" \
-        --region {{ eksexample_region }} 
-      when: eks_check_fargateprofile.rc == 0

@@ -15,7 +15,7 @@
 - name: setup service account for ebs csi controller
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
   shell: >
-    eksctl create iamserviceaccount \
+    eksctl  create iamserviceaccount \
     --name ebs-csi-controller-sa \
     --namespace kube-system \
     --cluster "{{ eksexample_clustername }}" \
@@ -24,51 +24,33 @@
     --region {{ eksexample_region }} \
     --override-existing-serviceaccounts
 
-- name: setup service account for ebs csi snapshot controller
+- name: add the EBS CSI Driver helm repo
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  shell: >
-    eksctl create iamserviceaccount \
-    --name ebs-snapshot-controller \
-    --namespace kube-system \
-    --cluster "{{ eksexample_clustername }}" \
-    --attach-policy-arn "arn:aws:iam::{{ caller_info.account }}:policy/EKSStorageProviderEBSSnapshotPolicy" \
-    --approve \
-    --region {{ eksexample_region }} \
-    --override-existing-serviceaccounts
+  kubernetes.core.helm_repository:
+    name: aws-ebs-csi-driver
+    repo_url: "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
 
-- name: Deploy storage providers
+- name: Deploy latest version of EBS CSI Driver chart inside kube-system namespace
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s:
-    state: present
-    apply: yes
-    definition: "{{ lookup('template', './k8s/storage-provider-ebscsi/eks-storage-provider-ebscsi-{{ item }}.manifest.yaml') | from_yaml }}"
-  loop:
-    - clusterrole-attacher
-    - clusterrole-provisioner
-    - clusterrole-resizer
-    - clusterrole-snapshot-controller
-    - clusterrole-snapshotter
-    - clusterrolebinding-attacher
-    - clusterrolebinding-provisioner
-    - clusterrolebinding-resizer
-    - clusterrolebinding-snapshot-controller
-    - clusterrolebinding-snapshotter
-    - role-snapshot-controller-leaderselection
-    - rolebinding-snapshot-controller-leaderselection
-    - controller
-    - csidriver
-    - node
-    - statefulset
+  kubernetes.core.helm:
+    name: aws-ebs-csi-driver
+    chart_ref: aws-ebs-csi-driver/aws-ebs-csi-driver
+    release_namespace: kube-system
+    values: 
+      controller: 
+        serviceAccount:  
+          create: false 
+          name: ebs-csi-controller-sa
 
 - name: create provisioned iops Storage Class
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
+  kubernetes.core.k8s: 
     state: present
     apply: yes
     definition:
       kind: StorageClass
       apiVersion: storage.k8s.io/v1
-      metadata:
+      metadata: 
         name: ebs-io1
       provisioner: ebs.csi.aws.com
       volumeBindingMode: WaitForFirstConsumer
@@ -80,7 +62,7 @@
 
 - name: create additional Storage Classes 
   delegate_to: "{{ EKSBastionInstancePublicIP }}"
-  community.kubernetes.k8s: 
+  kubernetes.core.k8s: 
     state: present
     apply: yes
     definition:
@@ -94,7 +76,6 @@
         csi.storage.k8s.io/fstype: ext4
         type: "{{ item.type }}"
         encrypted: "true"
-
   loop: 
     - { name: gp2, type: gp2 }
     - { name: sc1, type: sc1 }

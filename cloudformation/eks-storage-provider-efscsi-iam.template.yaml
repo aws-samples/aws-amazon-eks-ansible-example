@@ -1,0 +1,36 @@
+#############################################################
+## NOT FOR PRODUCTION USE.                                 ##
+## THE CONTENT OF THIS FILE IS FOR LEARNING PURPOSES ONLY  ##
+## created by David Surey, Amazon Web Services, 2020       ##
+#############################################################
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:   
+  EKSStorageProviderEFSCsiPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      ManagedPolicyName: EKSStorageProviderEFSCsiPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - elasticfilesystem:DescribeAccessPoints
+          - elasticfilesystem:DescribeFileSystems
+          - elasticfilesystem:DescribeMountTargets
+          - ec2:DescribeAvailabilityZones
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - elasticfilesystem:CreateAccessPoint
+          Resource: "*"
+          Condition:
+            StringLike:
+              aws:RequestTag/efs.csi.aws.com/cluster: 'true'
+        - Effect: Allow
+          Action: elasticfilesystem:DeleteAccessPoint
+          Resource: "*"
+          Condition:
+            StringEquals:
+              aws:ResourceTag/efs.csi.aws.com/cluster: 'true'
