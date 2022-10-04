@@ -21,14 +21,14 @@
 
     - name: import static var data
       include_vars:
-        dir: ./vars/static
+        dir: ../../vars/static
         ignore_unknown_extensions: True
         extensions:
           - yaml
 
     - name: import dynamic var data
       include_vars:
-        dir: ./vars/dynamic
+        dir: ../../vars/dynamic
         ignore_unknown_extensions: True
         extensions:
           - yaml
@@ -41,4 +41,4 @@
     - name: setup kube services
       include_tasks: "{{ item }}"
       loop:
-        - ./docs/examples/tasks/microservice-example.task.yaml
+        - ./tasks/microservice-example.task.yaml

@@ -19,7 +19,7 @@
   kubernetes.core.k8s:    
     state: present
     apply: yes
-    definition: "{{ lookup('template', './docs/examples/k8s/microservice-example/microservice-example-{{ item }}.manifest.yaml') | from_yaml }}"
+    definition: "{{ lookup('template', './k8s/microservice-example/microservice-example-{{ item }}.manifest.yaml') | from_yaml }}"
   loop: 
     - nodejs-deployment
     - crystal-deployment
@@ -34,7 +34,7 @@
   kubernetes.core.k8s: 
     state: present
     apply: yes
-    definition: "{{ lookup('template', './docs/examples/k8s/microservice-example/microservice-example-hpa.manifest.yaml') | from_yaml }}"
+    definition: "{{ lookup('template', './k8s/microservice-example/microservice-example-hpa.manifest.yaml') | from_yaml }}"
   loop: 
     - eksdemo-nodejs
     - eksdemo-crystal
