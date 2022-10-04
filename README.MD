@@ -217,24 +217,6 @@ you also can use for instance curl as a load generator
 watch -n 0.1 curl -v https://eksdemo.example.com
 ```
 
-the example microservice utilize fargate for the frontend. if you want to check AWS Fargate is actually used. Check using the following command: 
-```
-kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name -n eksdemo
-```
-
-which should give you something like: 
-```
-NODE                                                       NAME
-ip-192-168-93-136.eu-central-1.compute.internal            eksdemo-crystal-64779997f9-fp4s6
-ip-192-168-43-140.eu-central-1.compute.internal            eksdemo-crystal-64779997f9-rkxqk
-fargate-ip-192-168-158-210.eu-central-1.compute.internal   eksdemo-frontend-6fbb54ff4c-4kvh5
-fargate-ip-192-168-118-143.eu-central-1.compute.internal   eksdemo-frontend-6fbb54ff4c-8fck5
-fargate-ip-192-168-134-116.eu-central-1.compute.internal   eksdemo-frontend-6fbb54ff4c-dzjqq
-fargate-ip-192-168-101-17.eu-central-1.compute.internal    eksdemo-frontend-6fbb54ff4c-wnwtv
-ip-192-168-43-140.eu-central-1.compute.internal            eksdemo-nodejs-5b4b4889c8-kl5cp
-ip-192-168-93-136.eu-central-1.compute.internal            eksdemo-nodejs-5b4b4889c8-t6pc6
-```
-
 There are many other things to try out. Feel free to share your ideas :) 
 
 ---
