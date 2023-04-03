@@ -92,7 +92,7 @@ The Deployment consists of one main playbook triggering multible tasks, cloudfor
 - bastion.tasks.yaml: Sets up a Bastion Hosts used for the Amazon EKS deplyoment as well as all Kubernetes Deployments. Using the Bastion we'll not have to expose any ports/services of the Amazon EKS cluster backend to public internet.
 - eks-cluster.task.yaml: deploys the Amazon EKS cluster and enables the logging for the masterplane 
 - eks-cluster-autoscaler.task.yaml: setup of the [cluster-autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
-- eks-container-instights.task.yaml: enable [container insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html) for the Amazon EKS cluster
+- eks-container-insights.task.yaml: enable [container insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html) for the Amazon EKS cluster
 - eks-external-dns.task.yaml: setup of the Route53 automation via [external-dns](https://github.com/kubernetes-sigs/external-dns)
 - eks-ingress-controller.task.yaml: setup of the [aws-load-balancer-controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller) to automate service exposure
 - eks-metrics-server.task.yaml: setup of the metrics server used by the [Horizontal Pod Autoscaler](https://kubernetes.io/de/docs/tasks/run-application/horizontal-pod-autoscale/)
